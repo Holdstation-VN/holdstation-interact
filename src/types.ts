@@ -2,7 +2,7 @@ import { Address as SolanaAddress } from "@project-serum/anchor";
 import { Signer } from "@solana/web3.js";
 import { ethers } from "ethers";
 
-type SupportedProtocol = "evm" | "solana";
+export type SupportedProtocol = "evm" | "solana";
 
 type EvmAddressLike = string;
 

@@ -6,19 +6,24 @@ import { KyberSwap } from "./evm/swap-kyber";
 import { Okx } from "./evm/swap-okx";
 import { Dispatcher as SolanaDispatcher } from "./solana/dispatcher";
 import { Jupiter } from "./solana/swap-jupiter";
+import { SupportedProtocol, Writer } from "./types";
 
 const cachedJsonRpcProvider = new Map<string, ethers.providers.JsonRpcProvider>();
 const cachedSolanaProvider = new Map<string, Connection>();
 
-export async function load(type: "evm" | "solana", rpc: string) {
+export async function load(type: SupportedProtocol, rpc: string): Promise<Writer<SupportedProtocol>> {
   if (type === "evm") {
     return evm(rpc);
+  }
+
+  if (type === "solana") {
+    return solana(rpc);
   }
 
   throw new Error("Unsupported protocol");
 }
 
-async function evm(rpc: string) {
+async function evm(rpc: string): Promise<Writer<"evm">> {
   if (!cachedJsonRpcProvider.has(rpc)) {
     const provider = new ethers.providers.JsonRpcProvider(rpc);
     const chainId = await provider.getNetwork().then((network) => network.chainId);
@@ -37,7 +42,7 @@ async function evm(rpc: string) {
   return dispatcher;
 }
 
-async function solana(rpc: string) {
+async function solana(rpc: string): Promise<Writer<"solana">> {
   if (!cachedSolanaProvider.has(rpc)) {
     const connection = new Connection(rpc);
     cachedSolanaProvider.set(rpc, connection);
