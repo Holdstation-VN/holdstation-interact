@@ -21,8 +21,8 @@ export type SwapParams<SP extends SupportedProtocol> = {
   toToken: Address<SP>;
   amount: string;
   slippage: string;
-  router: Address<SP>;
   chainId: number;
+  prefferRouters?: string[];
 };
 
 export type OverrideParams<SP extends SupportedProtocol> = {
