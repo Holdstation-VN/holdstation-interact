@@ -17,5 +17,11 @@ export default defineConfig({
       external: ["@solana/spl-token", "@solana/web3.js", "ethers"], // Exclude vite.config.ts from the build
     },
   },
-  plugins: [dts()],
+  plugins: [
+    dts({
+      entryRoot: "src", // Specify the root directory for TypeScript files
+      outDir: "dist", // Output directory for the declaration file
+      copyDtsFiles: true,
+    }),
+  ],
 });
