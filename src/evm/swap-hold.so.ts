@@ -22,20 +22,21 @@ export class HoldSo implements Swapper<"evm"> {
     const value = isNativeToken(params.fromToken) ? params.amount : "0";
 
     let gasLimit = override?.gasLimit;
+
     if (!gasLimit) {
-      gasLimit = (
-        await this.provider.estimateGas({
+      gasLimit = await this.provider
+        .estimateGas({
           from: override?.from ?? ethers.constants.AddressZero,
           to: HOLDSO_ROUTER_ADDRESSES[chainId],
           data: resp.tx.data,
           value,
         })
-      ).toString();
+        .then((gas) => gas.toString());
     }
 
     return {
       to: HOLDSO_ROUTER_ADDRESSES[chainId],
-      gas: gasLimit,
+      gas: gasLimit ?? "0",
       data: resp.tx.data,
       addons: {
         amountOut: resp.quote.amount,
