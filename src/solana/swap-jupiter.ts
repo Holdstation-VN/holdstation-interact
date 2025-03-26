@@ -2,7 +2,6 @@ import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { OverrideParams, SwapParams, Swapper } from "../types";
 import type { QuoteResponse, SwapInfoResponse } from "./swap-jupiter.types";
 
-// TODO: add hold.so
 export class Jupiter implements Swapper<"solana"> {
   private swapUrl = "https://api.jup.ag/swap/v1/swap";
 
@@ -39,8 +38,10 @@ export class Jupiter implements Swapper<"solana"> {
     url.searchParams.append("outputMint", params.toToken.toString());
     url.searchParams.append("amount", params.amount.toString());
     url.searchParams.append("slippageBps", params.slippage.toString());
-    url.searchParams.append("onlyDirectRoutes", "false");
+    // url.searchParams.append("onlyDirectRoutes", "false");
     url.searchParams.append("restrictIntermediateTokens", "true");
+
+    console.debug(`Jupiter quote: ${url.toString()}`);
 
     const resp = await fetch(url.toString(), {
       headers: {
@@ -49,7 +50,18 @@ export class Jupiter implements Swapper<"solana"> {
     });
 
     if (!resp.ok) {
-      throw new Error("Failed to get quote");
+      const msg = await resp
+        .json()
+        .then((data) => {
+          if (data.error && data.errorCode) {
+            return `${data.errorCode}: ${data.error}`;
+          }
+
+          return `Unexpected error: ${resp.status}`;
+        })
+        .catch((e) => e.message);
+
+      throw new Error(msg);
     }
 
     const data: QuoteResponse = await resp.json();
