@@ -1,5 +1,5 @@
 import { createTransferInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Connection, PublicKey, Signer, Transaction } from "@solana/web3.js";
+import { Connection, PublicKey, Signer, Transaction, VersionedTransaction } from "@solana/web3.js";
 import { EstimatedData, Estimator, OverrideParams, SwapParams, Swapper, TransferParams, Writer } from "../types";
 
 export class Dispatcher implements Writer<"solana"> {
@@ -44,7 +44,31 @@ export class Dispatcher implements Writer<"solana"> {
   }
 
   async swap(wallet: Signer, params: EstimatedData): Promise<string> {
-    throw new Error("Method not implemented.");
+    const txBuffer = Buffer.from(params.data, "base64");
+    // Chuyển Buffer thành Uint8Array để tránh lỗi kiểu
+    const uint8Array = new Uint8Array(txBuffer);
+    const versionedTx = VersionedTransaction.deserialize(uint8Array);
+
+    versionedTx.sign([wallet]);
+
+    const signature = await this.connection.sendRawTransaction(versionedTx.serialize(), {
+      maxRetries: 2,
+      skipPreflight: true,
+    });
+
+    /**
+      const latestBlockhash = await connection.getLatestBlockhash();
+      const confirmation = await connection.confirmTransaction(
+        {
+          signature,
+          blockhash: latestBlockhash.blockhash,
+          lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+        },
+        'confirmed'
+      );
+     */
+
+    return signature;
   }
 
   async load(swapper: Swapper<"solana">): Promise<void> {

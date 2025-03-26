@@ -29,7 +29,9 @@ export type OverrideParams<SP extends SupportedProtocol> = SP extends "evm"
       gasLimit: string;
       gasPrice: string;
     }
-  : never;
+  : {
+      from: Address<SP>;
+    };
 
 export type EstimatedData = {
   // router name: hold.so, kyberswap, etc...
