@@ -25,7 +25,7 @@ export class Dispatcher implements Writer<"solana"> {
     const destATA = await getAssociatedTokenAddress(tokenMint, new PublicKey(params.to));
 
     const transaction = new Transaction().add(
-      createTransferInstruction(sourceATA, destATA, params.signer.publicKey, Number(params.amount), [], TOKEN_PROGRAM_ID)
+      createTransferInstruction(sourceATA, destATA, params.signer.publicKey, Number(params.amount), [], TOKEN_PROGRAM_ID),
     );
 
     const { blockhash } = await this.connection.getLatestBlockhash();
@@ -83,7 +83,44 @@ export class Dispatcher implements Writer<"solana"> {
     throw new Error("Method not implemented.");
   }
 
-  private async _estimateSwap(params: SwapParams<"solana">): Promise<EstimatedData> {
+  private async _estimateSwap(params: SwapParams<"solana">, override?: Partial<OverrideParams<"solana">>): Promise<EstimatedData> {
+    let preferredRouters = params.prefferRouters || Object.keys(this.swapper);
+    if (preferredRouters.length === 0) {
+      throw new Error("No router available");
+    }
+
+    if (!override?.from) {
+      throw new Error("From address is required");
+    }
+
+    let lastError: any = undefined;
+
+    for (const router of preferredRouters) {
+      const swapper = this.swapper[router];
+      if (!swapper) {
+        continue;
+      }
+
+      if (!swapper.enabled(1399811149)) {
+        continue;
+      }
+
+      try {
+        const result = await Promise.race<EstimatedData>([
+          swapper.estimate(params, { from: override.from }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 30_000)),
+        ]);
+
+        return result;
+      } catch (e: any) {
+        lastError = e;
+      }
+    }
+
+    if (lastError) {
+      throw lastError;
+    }
+
     throw new Error("No router available");
   }
 }

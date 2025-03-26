@@ -16,12 +16,6 @@ export default defineConfig({
     rollupOptions: {
       external: ["@solana/spl-token", "@solana/web3.js", "ethers"], // Exclude vite.config.ts from the build
     },
-    minify: "terser",
-    terserOptions: {
-      compress: {
-        drop_console: false, // Prevents removal of console statements
-      },
-    },
   },
   plugins: [
     dts({
