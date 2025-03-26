@@ -34,12 +34,7 @@ export interface SwapInfo {
 }
 
 export interface MostReliableAmmsQuoteReport {
-  info: Info;
-}
-
-export interface Info {
-  "6oFWm7KPLfxnwMb3z5xwBoXNSPP3JJyirAPqPSiVcnsp": string;
-  Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE: string;
+  info: Record<string, string>;
 }
 
 export interface SwapInfoResponse {
