@@ -1,6 +1,6 @@
 {
   "name": "@lamlv/interact",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "dist/interact.cjs.js",
   "module": "dist/interact.es.js",
   "types": "dist/types.d.ts",
