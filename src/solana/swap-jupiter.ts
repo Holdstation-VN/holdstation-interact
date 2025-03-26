@@ -1,4 +1,5 @@
 import { Connection, VersionedTransaction } from "@solana/web3.js";
+import { BigNumber } from "bignumber.js";
 import { OverrideParams, SwapParams, Swapper } from "../types";
 import type { QuoteResponse, SwapInfoResponse } from "./swap-jupiter.types";
 
@@ -19,6 +20,25 @@ export class Jupiter implements Swapper<"solana"> {
       to: "",
       gas: (feeResult.value || 5000).toString(),
       data: swapInfo.swapTransaction,
+      addons: {
+        amountOut: quote.outAmount,
+        amountOutUsd: quote.swapUsdValue,
+        minAmountOut: quote.outAmount,
+        protocols: quote.routePlan.map((rp) => {
+          return {
+            amount: new BigNumber(rp.swapInfo.outAmount).multipliedBy(rp.percent).div(100).toString(),
+            swaps: [
+              {
+                amount: rp.swapInfo.outAmount,
+                from: rp.swapInfo.inputMint,
+                pool: rp.swapInfo.ammKey,
+                protocol: rp.swapInfo.label,
+                to: rp.swapInfo.outputMint,
+              },
+            ],
+          };
+        }),
+      },
     };
   }
 

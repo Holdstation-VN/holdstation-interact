@@ -7,30 +7,6 @@ import { isNativeToken } from "./util";
 export class HoldSo implements Swapper<"evm"> {
   constructor(private provider: ethers.providers.JsonRpcProvider) {}
 
-  async fetchSwapParams(params: HoldSoSwapRequestParams) {
-    try {
-      const chainId = this.provider.network.chainId;
-
-      const baseUrl = HOLDSO_URL[chainId] + "/swap";
-      const url = new URL(baseUrl);
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          url.searchParams.append(key, value.toString());
-        }
-      });
-
-      const response = await fetch(url.toString(), { method: "GET" });
-      if (response.status < 200 || response.status >= 400) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      return (await response.json()) as HoldSoSwapResponse;
-    } catch (error: any) {
-      throw new Error(`Failed to execute swap: ${error.message}`);
-    }
-  }
-
   async estimate(params: SwapParams<"evm">, override?: Partial<{ from: string; gasLimit: string; gasPrice: string }>) {
     // Implement the logic to estimate the gas and other parameters for the swap
     const paramsSwap: HoldSoSwapRequestParams = {
@@ -61,6 +37,21 @@ export class HoldSo implements Swapper<"evm"> {
       to: HOLDSO_ROUTER_ADDRESSES[chainId],
       gas: gasLimit,
       data: resp.tx.data,
+      addons: {
+        amountOut: resp.quote.amount,
+        amountOutUsd: resp.quote.amountUsd,
+        minAmountOut: resp.quote.minReceive,
+        protocols: resp.quote.protocols.map((p) => ({
+          amount: p.amount,
+          swaps: p.swaps.map((s) => ({
+            amount: s.amount,
+            from: s.from,
+            pool: s.pool,
+            protocol: s.protocol,
+            to: s.to,
+          })),
+        })),
+      },
     };
   }
 
@@ -72,5 +63,26 @@ export class HoldSo implements Swapper<"evm"> {
     // only zksync or bera
 
     return chainId === 324 || chainId === 80094;
+  }
+
+  private async fetchSwapParams(params: HoldSoSwapRequestParams) {
+    const chainId = this.provider.network.chainId;
+
+    const baseUrl = HOLDSO_URL[chainId] + "/swap";
+    const url = new URL(baseUrl);
+
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.append(key, value.toString());
+    }
+
+    const response = await fetch(url.toString(), { method: "GET" });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    const result: HoldSoSwapResponse = await response.json();
+
+    return result;
   }
 }

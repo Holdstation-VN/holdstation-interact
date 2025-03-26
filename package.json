@@ -26,6 +26,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.13",
     "abitype": "^1.0.8",
+    "bignumber.js": "^9.1.2",
     "eslint": "^9.23.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.5",
@@ -44,6 +45,7 @@
   "peerDependencies": {
     "@solana/spl-token": "^0.4.13",
     "@solana/web3.js": "^1.98.0",
+    "bignumber.js": "^9.1.2",
     "ethers": "5.8.0"
   },
   "prettier": {

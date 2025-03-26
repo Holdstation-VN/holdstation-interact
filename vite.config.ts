@@ -14,7 +14,7 @@ export default defineConfig({
       fileName: (format) => `interact.${format}.js`,
     },
     rollupOptions: {
-      external: ["@solana/spl-token", "@solana/web3.js", "ethers"], // Exclude vite.config.ts from the build
+      external: ["@solana/spl-token", "@solana/web3.js", "ethers", "bignumber.js"], // Exclude vite.config.ts from the build
     },
   },
   plugins: [

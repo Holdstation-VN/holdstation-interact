@@ -44,6 +44,26 @@ export type EstimatedData = {
   data: string;
 
   value?: string;
+
+  addons?: Partial<{
+    amountOut: string;
+    amountOutUsd: string;
+    minAmountOut: string;
+    protocols: ProtocolsItem[];
+  }>;
+};
+
+export type SwapsItem = {
+  amount: string;
+  from: string;
+  pool: string;
+  protocol: string;
+  to: string;
+};
+
+export type ProtocolsItem = {
+  amount: string;
+  swaps: SwapsItem[];
 };
 
 export interface Estimator<SP extends SupportedProtocol> {
