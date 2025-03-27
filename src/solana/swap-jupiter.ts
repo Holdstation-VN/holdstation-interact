@@ -15,7 +15,7 @@ export class Jupiter implements Swapper<"solana"> {
     const buffer = Buffer.from(swapInfo.swapTransaction, "base64");
     const versionedTx = VersionedTransaction.deserialize(Uint8Array.from(buffer));
     const feeResult = await this.connection.getFeeForMessage(versionedTx.message, "confirmed");
-
+   
     return {
       to: "",
       gas: (feeResult.value || 5000).toString(),
@@ -24,20 +24,23 @@ export class Jupiter implements Swapper<"solana"> {
         amountOut: quote.outAmount,
         amountOutUsd: quote.swapUsdValue,
         minAmountOut: quote.outAmount,
-        protocols: quote.routePlan.map((rp) => {
-          return {
-            amount: new BigNumber(rp.swapInfo.outAmount).multipliedBy(rp.percent).div(100).toString(),
-            swaps: [
+        // protocols is a list of pathways that funds take when swapping between two tokens.
+        protocols: [{
+            // amount: refers to the amount of funds received when using this pathway.
+            amount: new BigNumber(quote.routePlan?.[quote.routePlan.length -1].swapInfo.outAmount).toString(),
+            // swaps: provides details about the transaction routes, specifying through which tokens the funds are exchanged and by which protocols the swaps are executed.
+            swaps:  quote.routePlan.map((rp) =>
               {
-                amount: rp.swapInfo.outAmount,
-                from: rp.swapInfo.inputMint,
-                pool: rp.swapInfo.ammKey,
-                protocol: rp.swapInfo.label,
-                to: rp.swapInfo.outputMint,
-              },
-            ],
-          };
-        }),
+               return { 
+                  amount: rp.swapInfo.outAmount,
+                  from: rp.swapInfo.inputMint,
+                  pool: rp.swapInfo.ammKey,
+                  protocol: rp.swapInfo.label,
+                  to: rp.swapInfo.outputMint,
+                }
+              }
+            )
+        }],
       },
     };
   }
