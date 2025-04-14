@@ -4,7 +4,7 @@ import { OverrideParams, SwapParams, Swapper } from "../types";
 import type { QuoteResponse, SwapInfoResponse } from "./swap-jupiter.types";
 
 export class Jupiter implements Swapper<"solana"> {
-  private swapUrl = "https://api.jup.ag/swap/v1/swap";
+  private swapUrl = "https://lite-api.jup.ag/swap/v1/swap";
 
   constructor(private connection: Connection) {}
 
@@ -56,13 +56,18 @@ export class Jupiter implements Swapper<"solana"> {
 
   // https://dev.jup.ag/docs/api/swap-api/quote
   private async getQuote(params: SwapParams<"solana">) {
-    const url = new URL("https://api.jup.ag/swap/v1/quote");
+    const url = new URL("https://lite-api.jup.ag/swap/v1/quote");
     url.searchParams.append("inputMint", params.fromToken.toString());
     url.searchParams.append("outputMint", params.toToken.toString());
     url.searchParams.append("amount", params.amount.toString());
     url.searchParams.append("slippageBps", params.slippage.toString());
     // url.searchParams.append("onlyDirectRoutes", "false");
     url.searchParams.append("restrictIntermediateTokens", "true");
+    // https://dev.jup.ag/docs/api/swap-api/quote
+    // url.searchParams.append("swapMode", "ExactIn");
+    // url.searchParams.append("onlyDirectRoutes", "false");
+    // url.searchParams.append("asLegacyTransaction", "false");
+    // url.searchParams.append("maxAccounts", "64");
 
     console.debug(`Jupiter quote: ${url.toString()}`);
 
@@ -109,6 +114,9 @@ export class Jupiter implements Swapper<"solana"> {
 
         // ADDITIONAL PARAMETERS TO OPTIMIZE FOR TRANSACTION LANDING
         // See next guide to optimize for transaction landing
+        // https://dev.jup.ag/docs/api/swap-api/swap
+        // wrapAndUnwrapSol: true,
+
         dynamicComputeUnitLimit: true,
         dynamicSlippage: true,
         prioritizationFeeLamports: {
