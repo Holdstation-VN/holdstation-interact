@@ -1,5 +1,6 @@
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { BigNumber } from "bignumber.js";
+import { config } from "../config";
 import { OverrideParams, SwapParams, Swapper } from "../types";
 import type { QuoteResponse, SwapInfoResponse } from "./swap-jupiter.types";
 
@@ -25,22 +26,22 @@ export class Jupiter implements Swapper<"solana"> {
         amountOutUsd: quote.swapUsdValue,
         minAmountOut: quote.outAmount,
         // protocols is a list of pathways that funds take when swapping between two tokens.
-        protocols: [{
+        protocols: [
+          {
             // amount: refers to the amount of funds received when using this pathway.
-            amount: new BigNumber(quote.routePlan?.[quote.routePlan.length -1].swapInfo.outAmount).toString(),
+            amount: new BigNumber(quote.routePlan?.[quote.routePlan.length - 1].swapInfo.outAmount).toString(),
             // swaps: provides details about the transaction routes, specifying through which tokens the funds are exchanged and by which protocols the swaps are executed.
-            swaps:  quote.routePlan.map((rp) =>
-              {
+            swaps: quote.routePlan.map((rp) => {
               return {
                 amount: rp.swapInfo.outAmount,
                 from: rp.swapInfo.inputMint,
                 pool: rp.swapInfo.ammKey,
                 protocol: rp.swapInfo.label,
                 to: rp.swapInfo.outputMint,
-              }
-            }
-          )
-          }],
+              };
+            }),
+          },
+        ],
       },
     };
   }
@@ -49,7 +50,7 @@ export class Jupiter implements Swapper<"solana"> {
     return "jupiter";
   }
 
-  enabled(chainId: number): boolean {
+  enabled(): boolean {
     // alway on for solana
     return true;
   }
@@ -76,30 +77,28 @@ export class Jupiter implements Swapper<"solana"> {
       },
     });
 
-    if (!resp.ok) {
+    if (!resp?.ok) {
       // part 1 fail => part 2 fetch data witch api key
       if (params?.apiKey) {
         resp = await fetch(url.toString(), {
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": params.apiKey,
+            "x-api-key": params.apiKey ?? config.SOLANA_JUPITER_API_KEY,
           },
         });
       }
       // handle error fetch data
-      if (!resp.ok) {
-        const msg = await resp
-          .json()
-          .then((data) => {
-            if (data.error && data.errorCode) {
-              return `${data.errorCode}: ${data.error}`;
-            }
-
-            return `Unexpected error: ${resp.status}`;
-          })
-          .catch((e) => e.message);
-
-        throw new Error(msg);
+      if (!resp?.ok) {
+        let errorMessage = "Failed to get quote info";
+        try {
+          const errorData = await resp.json();
+          console.log("errorData ", errorData);
+          errorMessage = errorData.message || JSON.stringify(errorData);
+        } catch {
+          const errorText = await resp?.text();
+          if (errorText) errorMessage = errorText;
+        }
+        throw new Error(errorMessage);
       }
     }
 
@@ -137,7 +136,7 @@ export class Jupiter implements Swapper<"solana"> {
       body,
     });
 
-    if (!resp.ok) {
+    if (!resp?.ok) {
       if (apiKey) {
         // part 1 fail => part 2 fetch data witch api key
         resp = await fetch(this.swapUrl, {
@@ -150,8 +149,17 @@ export class Jupiter implements Swapper<"solana"> {
         });
       }
       // handle error fetch data
-      if (!resp.ok) {
-        throw new Error("Failed to get swap info");
+      if (!resp?.ok) {
+        let errorMessage = "Failed to get swap info";
+        try {
+          const errorData = await resp.json();
+          console.log("errorData ", errorData);
+          errorMessage = errorData.message || JSON.stringify(errorData);
+        } catch {
+          const errorText = await resp?.text();
+          if (errorText) errorMessage = errorText;
+        }
+        throw new Error(errorMessage);
       }
     }
 

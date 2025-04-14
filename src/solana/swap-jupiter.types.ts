@@ -6,10 +6,14 @@ export interface QuoteResponse {
   otherAmountThreshold: string;
   swapMode: string;
   slippageBps: number;
-  platformFee: any;
+
+  // TODO: declare type
+  platformFee: unknown;
   priceImpactPct: string;
   routePlan: RoutePlan[];
-  scoreReport: any;
+
+  // TODO: declare type
+  scoreReport: unknown;
   contextSlot: number;
   timeTaken: number;
   swapUsdValue: string;
@@ -44,9 +48,11 @@ export interface SwapInfoResponse {
   computeUnitLimit: number;
   prioritizationType: PrioritizationType;
   simulationSlot: number;
-  dynamicSlippageReport: any;
-  simulationError: any;
-  addressesByLookupTableAddress: any;
+
+  // TODO: declare type
+  dynamicSlippageReport: unknown;
+  simulationError: unknown;
+  addressesByLookupTableAddress: unknown;
 }
 
 export interface PrioritizationType {
