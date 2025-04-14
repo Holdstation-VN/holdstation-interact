@@ -121,7 +121,7 @@ export class Jupiter implements Swapper<"solana"> {
         dynamicSlippage: true,
         prioritizationFeeLamports: {
           priorityLevelWithMaxLamports: {
-            maxLamports: 10000000,
+            maxLamports: 10_000_000,
             priorityLevel: "veryHigh",
           },
         },
