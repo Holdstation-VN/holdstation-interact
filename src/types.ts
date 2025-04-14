@@ -20,6 +20,9 @@ export type SwapParams<SP extends SupportedProtocol> = {
   toToken: Address<SP>;
   amount: string;
   slippage: string;
+  fee?: string;
+  feeAddress?: string;
+  apiKey?: string;
   prefferRouters?: string[];
 };
 

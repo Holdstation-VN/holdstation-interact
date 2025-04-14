@@ -10,12 +10,12 @@ export class Jupiter implements Swapper<"solana"> {
 
   async estimate(params: SwapParams<"solana">, override?: Partial<OverrideParams<"solana">>) {
     const quote = await this.getQuote(params);
-    const swapInfo = await this.getSwapInfo(quote, override);
+    const swapInfo = await this.getSwapInfo(quote, override, params?.feeAddress, params?.apiKey);
 
     const buffer = Buffer.from(swapInfo.swapTransaction, "base64");
     const versionedTx = VersionedTransaction.deserialize(Uint8Array.from(buffer));
     const feeResult = await this.connection.getFeeForMessage(versionedTx.message, "confirmed");
-   
+
     return {
       to: "",
       gas: (feeResult.value || 5000).toString(),
@@ -31,16 +31,16 @@ export class Jupiter implements Swapper<"solana"> {
             // swaps: provides details about the transaction routes, specifying through which tokens the funds are exchanged and by which protocols the swaps are executed.
             swaps:  quote.routePlan.map((rp) =>
               {
-               return { 
-                  amount: rp.swapInfo.outAmount,
-                  from: rp.swapInfo.inputMint,
-                  pool: rp.swapInfo.ammKey,
-                  protocol: rp.swapInfo.label,
-                  to: rp.swapInfo.outputMint,
-                }
+              return {
+                amount: rp.swapInfo.outAmount,
+                from: rp.swapInfo.inputMint,
+                pool: rp.swapInfo.ammKey,
+                protocol: rp.swapInfo.label,
+                to: rp.swapInfo.outputMint,
               }
-            )
-        }],
+            }
+          )
+          }],
       },
     };
   }
@@ -63,28 +63,44 @@ export class Jupiter implements Swapper<"solana"> {
     url.searchParams.append("slippageBps", params.slippage.toString());
     // url.searchParams.append("onlyDirectRoutes", "false");
     url.searchParams.append("restrictIntermediateTokens", "true");
+    // platformFeeBps to 20 which equates to 0.2%.
+    if (params?.fee) {
+      url.searchParams.append("platformFeeBps", params.fee.toString());
+    }
 
     console.debug(`Jupiter quote: ${url.toString()}`);
-
-    const resp = await fetch(url.toString(), {
+    // part 1 fetch data without api key
+    let resp = await fetch(url.toString(), {
       headers: {
         "Content-Type": "application/json",
       },
     });
 
     if (!resp.ok) {
-      const msg = await resp
-        .json()
-        .then((data) => {
-          if (data.error && data.errorCode) {
-            return `${data.errorCode}: ${data.error}`;
-          }
+      // part 1 fail => part 2 fetch data witch api key
+      if (params?.apiKey) {
+        resp = await fetch(url.toString(), {
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": params.apiKey,
+          },
+        });
+      }
+      // handle error fetch data
+      if (!resp.ok) {
+        const msg = await resp
+          .json()
+          .then((data) => {
+            if (data.error && data.errorCode) {
+              return `${data.errorCode}: ${data.error}`;
+            }
 
-          return `Unexpected error: ${resp.status}`;
-        })
-        .catch((e) => e.message);
+            return `Unexpected error: ${resp.status}`;
+          })
+          .catch((e) => e.message);
 
-      throw new Error(msg);
+        throw new Error(msg);
+      }
     }
 
     const data: QuoteResponse = await resp.json();
@@ -92,36 +108,51 @@ export class Jupiter implements Swapper<"solana"> {
   }
 
   // https://dev.jup.ag/docs/api/swap-api/swap
-  private async getSwapInfo(quote: QuoteResponse, override?: Partial<OverrideParams<"solana">>) {
+  private async getSwapInfo(quote: QuoteResponse, override?: Partial<OverrideParams<"solana">>, feeAccount?: string, apiKey?: string) {
     if (!override?.from) {
       throw new Error("Unknown user public key");
     }
 
-    const resp = await fetch(this.swapUrl, {
+    const body = JSON.stringify({
+      quoteResponse: quote,
+      userPublicKey: override.from,
+      feeAccount: feeAccount,
+      // ADDITIONAL PARAMETERS TO OPTIMIZE FOR TRANSACTION LANDING
+      // See next guide to optimize for transaction landing
+      dynamicComputeUnitLimit: true,
+      dynamicSlippage: true,
+      prioritizationFeeLamports: {
+        priorityLevelWithMaxLamports: {
+          maxLamports: 1000000,
+          priorityLevel: "veryHigh",
+        },
+      },
+    });
+    // part 1 fetch data without api key
+    let resp = await fetch(this.swapUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // 'x-api-key': '' // enter api key here
       },
-      body: JSON.stringify({
-        quoteResponse: quote,
-        userPublicKey: override.from,
-
-        // ADDITIONAL PARAMETERS TO OPTIMIZE FOR TRANSACTION LANDING
-        // See next guide to optimize for transaction landing
-        dynamicComputeUnitLimit: true,
-        dynamicSlippage: true,
-        prioritizationFeeLamports: {
-          priorityLevelWithMaxLamports: {
-            maxLamports: 1000000,
-            priorityLevel: "veryHigh",
-          },
-        },
-      }),
+      body,
     });
 
     if (!resp.ok) {
-      throw new Error("Failed to get swap info");
+      if (apiKey) {
+        // part 1 fail => part 2 fetch data witch api key
+        resp = await fetch(this.swapUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey, // enter api key here
+          },
+          body,
+        });
+      }
+      // handle error fetch data
+      if (!resp.ok) {
+        throw new Error("Failed to get swap info");
+      }
     }
 
     const data: SwapInfoResponse = await resp.json();
