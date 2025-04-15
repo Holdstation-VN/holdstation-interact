@@ -5,16 +5,22 @@ export interface QuoteResponse {
   outAmount: string;
   otherAmountThreshold: string;
   swapMode: string;
-  slippageBps: number;
-  platformFee: any;
-  priceImpactPct: string;
+  slippageBps: number | null;
+  platformFee: {
+    amount: string;
+    feeBps: number;
+  } | null;
+  priceImpactPct: string | null;
   routePlan: RoutePlan[];
-  scoreReport: any;
-  contextSlot: number;
-  timeTaken: number;
+
+  // TODO: declare type
+  scoreReport: unknown | null;
+
+  contextSlot: number | null;
+  timeTaken: number | null;
   swapUsdValue: string;
-  simplerRouteUsed: boolean;
-  mostReliableAmmsQuoteReport: MostReliableAmmsQuoteReport;
+  simplerRouteUsed: boolean | null;
+  mostReliableAmmsQuoteReport: MostReliableAmmsQuoteReport | null;
 }
 
 export interface RoutePlan {
@@ -43,10 +49,15 @@ export interface SwapInfoResponse {
   prioritizationFeeLamports: number;
   computeUnitLimit: number;
   prioritizationType: PrioritizationType;
-  simulationSlot: number;
-  dynamicSlippageReport: any;
-  simulationError: any;
-  addressesByLookupTableAddress: any;
+  simulationSlot: number | null;
+  simulationError: {
+    errorCode: string;
+    error: string;
+  } | null;
+
+  // TODO: declare type
+  addressesByLookupTableAddress: unknown | null;
+  dynamicSlippageReport: unknown | null;
 }
 
 export interface PrioritizationType {

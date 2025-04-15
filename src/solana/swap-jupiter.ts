@@ -2,23 +2,49 @@ import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { BigNumber } from "bignumber.js";
 import { OverrideParams, SwapParams, Swapper } from "../types";
 import type { QuoteResponse, SwapInfoResponse } from "./swap-jupiter.types";
+import { quoteResponseSchema, swapInfoResponseSchema } from "./validateResponse";
 
 export class Jupiter implements Swapper<"solana"> {
   private swapUrl = "https://lite-api.jup.ag/swap/v1/swap";
 
   constructor(private connection: Connection) {}
 
+  estimateComputeLamports(swapInfo: SwapInfoResponse): number {
+    const { computeUnitLimit, prioritizationType } = swapInfo;
+    const { microLamports } = prioritizationType.computeBudget;
+
+    // Tính từ công thức:
+    // computeUnitLimit × (microLamports / 1,000,000)
+    // (vì 1 lamport = 1,000,000 microLamports)
+    const lamports = Math.round(computeUnitLimit * (microLamports / 1_000_000));
+
+    return lamports;
+  }
+
   async estimate(params: SwapParams<"solana">, override?: Partial<OverrideParams<"solana">>) {
     const quote = await this.getQuote(params);
     const swapInfo = await this.getSwapInfo(quote, override);
 
+    if (swapInfo?.simulationError) {
+      throw new Error(swapInfo?.simulationError.error);
+    }
+    const estimateLamports = this.estimateComputeLamports(swapInfo);
+
     const buffer = Buffer.from(swapInfo.swapTransaction, "base64");
     const versionedTx = VersionedTransaction.deserialize(Uint8Array.from(buffer));
     const feeResult = await this.connection.getFeeForMessage(versionedTx.message, "confirmed");
+    // Buffer gas to 1.2 for display
+    const totalEstimateFee = (feeResult?.value ? feeResult.value + estimateLamports : estimateLamports + 5000) * 1.2;
+
+    console.debug("result ", {
+      to: "",
+      gas: totalEstimateFee.toString(),
+      data: swapInfo.swapTransaction,
+    });
 
     return {
       to: "",
-      gas: (feeResult.value || 5000).toString(),
+      gas: totalEstimateFee.toString(),
       data: swapInfo.swapTransaction,
 
       addons: {
@@ -102,8 +128,12 @@ export class Jupiter implements Swapper<"solana"> {
       throw new Error(msg);
     }
 
-    const data: QuoteResponse = await resp.json();
-    return data;
+    const data = await resp.json();
+    const validatedData: QuoteResponse = await quoteResponseSchema.validate(data, {
+      abortEarly: false,
+    });
+
+    return validatedData;
   }
 
   // https://dev.jup.ag/docs/api/swap-api/swap
@@ -122,7 +152,7 @@ export class Jupiter implements Swapper<"solana"> {
       ...(!override?.computeUnitPriceMicroLamports && {
         prioritizationFeeLamports: {
           priorityLevelWithMaxLamports: {
-            maxLamports: override?.maxLamports ?? 10_000_000,
+            maxLamports: override?.maxLamports ?? 15_000_000,
             priorityLevel: "veryHigh",
           },
         },
@@ -146,8 +176,11 @@ export class Jupiter implements Swapper<"solana"> {
       throw new Error("Failed to get swap info");
     }
 
-    const data: SwapInfoResponse = await resp.json();
-    console.debug("getSwapInfo ", data);
-    return data;
+    const data = await resp.json();
+    const validatedData: SwapInfoResponse = await swapInfoResponseSchema.validate(data, {
+      abortEarly: false,
+    });
+    console.debug("getSwapInfo ", validatedData);
+    return validatedData;
   }
 }

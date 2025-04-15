@@ -21,6 +21,22 @@ describe("[Solana SWAP] Jupiter", () => {
     expect(result.gas).toMatch(/^\d+$/); // Chuỗi số, không rỗng
   });
 
+  it("estimate swap SOL -> USDT (base case)", async () => {
+    const result = await jup.estimate(
+      {
+        fromToken: "So11111111111111111111111111111111111111112", // WSOL
+        toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", // USDT
+        amount: "1000000",
+        slippage: "10",
+      },
+      { from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN" }, // Random wallet
+    );
+
+    expect(result).toBeDefined();
+    expect(result.gas).toBeDefined();
+    expect(result.gas).toMatch(/^\d+$/); // Chuỗi số, không rỗng
+  });
+
   it("estimate swap với dynamicSlippage = true", async () => {
     const result = await jup.estimate(
       {
@@ -97,22 +113,23 @@ describe("[Solana SWAP] Jupiter", () => {
   });
 
   it("estimate swap error", async () => {
-    const result = await jup.estimate(
-      {
-        fromToken: "So11111111111111111111111111111111111111112",
-        toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        amount: "1000000",
-        slippage: "50",
-        swapMode: "ExactIn",
-      },
-      {
-        from: "jdocuPgEAjMfihABsPgKEvYtsmMzjUHeq9LX4Hvs7f3",
-        computeUnitPriceMicroLamports: 1000,
-        dynamicComputeUnitLimit: true,
-      },
-    );
-    expect(result).toBeDefined();
-    expect(result.gas).toMatch(/^\d+$/);
+    await expect(async () => {
+      await jup.estimate(
+        {
+          fromToken: "So11111111111111111111111111111111111111112",
+          toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          amount: "1000000",
+          slippage: "50",
+          swapMode: "ExactIn",
+        },
+        {
+          from: "jdocuPgEAjMfihABsPgKEvYtsmMzjUHeq9LX4Hvs7f3",
+          computeUnitPriceMicroLamports: 1000,
+          dynamicComputeUnitLimit: true,
+        },
+      );
+    }).rejects.toThrow();
+
     // Kiểm tra các giá trị mặc định (nếu có) khi không có override
   });
 
