@@ -15,32 +15,34 @@ export class Jupiter implements Swapper<"solana"> {
     const buffer = Buffer.from(swapInfo.swapTransaction, "base64");
     const versionedTx = VersionedTransaction.deserialize(Uint8Array.from(buffer));
     const feeResult = await this.connection.getFeeForMessage(versionedTx.message, "confirmed");
-   
+
     return {
       to: "",
       gas: (feeResult.value || 5000).toString(),
       data: swapInfo.swapTransaction,
+
       addons: {
         amountOut: quote.outAmount,
         amountOutUsd: quote.swapUsdValue,
         minAmountOut: quote.outAmount,
+        simulationError: swapInfo?.simulationError,
         // protocols is a list of pathways that funds take when swapping between two tokens.
-        protocols: [{
+        protocols: [
+          {
             // amount: refers to the amount of funds received when using this pathway.
-            amount: new BigNumber(quote.routePlan?.[quote.routePlan.length -1].swapInfo.outAmount).toString(),
+            amount: new BigNumber(quote.routePlan?.[quote.routePlan.length - 1].swapInfo.outAmount).toString(),
             // swaps: provides details about the transaction routes, specifying through which tokens the funds are exchanged and by which protocols the swaps are executed.
-            swaps:  quote.routePlan.map((rp) =>
-              {
-               return { 
-                  amount: rp.swapInfo.outAmount,
-                  from: rp.swapInfo.inputMint,
-                  pool: rp.swapInfo.ammKey,
-                  protocol: rp.swapInfo.label,
-                  to: rp.swapInfo.outputMint,
-                }
-              }
-            )
-        }],
+            swaps: quote.routePlan.map((rp) => {
+              return {
+                amount: rp.swapInfo.outAmount,
+                from: rp.swapInfo.inputMint,
+                pool: rp.swapInfo.ammKey,
+                protocol: rp.swapInfo.label,
+                to: rp.swapInfo.outputMint,
+              };
+            }),
+          },
+        ],
       },
     };
   }
@@ -61,13 +63,21 @@ export class Jupiter implements Swapper<"solana"> {
     url.searchParams.append("outputMint", params.toToken.toString());
     url.searchParams.append("amount", params.amount.toString());
     url.searchParams.append("slippageBps", params.slippage.toString());
-    // url.searchParams.append("onlyDirectRoutes", "false");
-    url.searchParams.append("restrictIntermediateTokens", "true");
+
     // https://dev.jup.ag/docs/api/swap-api/quote
-    // url.searchParams.append("swapMode", "ExactIn");
-    // url.searchParams.append("onlyDirectRoutes", "false");
-    // url.searchParams.append("asLegacyTransaction", "false");
-    // url.searchParams.append("maxAccounts", "64");
+    url.searchParams.append("restrictIntermediateTokens", params?.restrictIntermediateTokens ? params?.restrictIntermediateTokens.toString() : "true");
+    url.searchParams.append("onlyDirectRoutes", params?.onlyDirectRoutes ? params?.onlyDirectRoutes.toString() : "false");
+    url.searchParams.append("asLegacyTransaction", params?.asLegacyTransaction ? params?.asLegacyTransaction.toString() : "false");
+
+    if (params?.prefferRouters) {
+      url.searchParams.append("dexes", params?.prefferRouters.toString());
+    }
+    if (params?.swapMode) {
+      url.searchParams.append("swapMode", params?.swapMode.toString());
+    }
+    if (params?.maxAccounts) {
+      url.searchParams.append("maxAccounts", params?.maxAccounts.toString());
+    }
 
     console.debug(`Jupiter quote: ${url.toString()}`);
 
@@ -101,6 +111,27 @@ export class Jupiter implements Swapper<"solana"> {
     if (!override?.from) {
       throw new Error("Unknown user public key");
     }
+    const bodyObject = {
+      quoteResponse: quote,
+      userPublicKey: override?.from,
+
+      // Giá trị mặc định là false, nếu override có đặt true thì lấy true
+      dynamicSlippage: override?.dynamicSlippage ?? false,
+      dynamicComputeUnitLimit: override?.dynamicComputeUnitLimit ?? false,
+
+      ...(!override?.computeUnitPriceMicroLamports && {
+        prioritizationFeeLamports: {
+          priorityLevelWithMaxLamports: {
+            maxLamports: override?.maxLamports ?? 10_000_000,
+            priorityLevel: "veryHigh",
+          },
+        },
+      }),
+
+      ...(override?.computeUnitPriceMicroLamports && {
+        computeUnitPriceMicroLamports: override.computeUnitPriceMicroLamports,
+      }),
+    };
 
     const resp = await fetch(this.swapUrl, {
       method: "POST",
@@ -108,24 +139,7 @@ export class Jupiter implements Swapper<"solana"> {
         "Content-Type": "application/json",
         // 'x-api-key': '' // enter api key here
       },
-      body: JSON.stringify({
-        quoteResponse: quote,
-        userPublicKey: override.from,
-
-        // ADDITIONAL PARAMETERS TO OPTIMIZE FOR TRANSACTION LANDING
-        // See next guide to optimize for transaction landing
-        // https://dev.jup.ag/docs/api/swap-api/swap
-        // wrapAndUnwrapSol: true,
-
-        dynamicComputeUnitLimit: true,
-        dynamicSlippage: true,
-        prioritizationFeeLamports: {
-          priorityLevelWithMaxLamports: {
-            maxLamports: 10_000_000,
-            priorityLevel: "veryHigh",
-          },
-        },
-      }),
+      body: JSON.stringify(bodyObject),
     });
 
     if (!resp.ok) {
@@ -133,7 +147,7 @@ export class Jupiter implements Swapper<"solana"> {
     }
 
     const data: SwapInfoResponse = await resp.json();
-
+    console.debug("getSwapInfo ", data);
     return data;
   }
 }

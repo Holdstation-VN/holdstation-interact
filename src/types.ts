@@ -21,6 +21,11 @@ export type SwapParams<SP extends SupportedProtocol> = {
   amount: string;
   slippage: string;
   prefferRouters?: string[];
+  asLegacyTransaction?: boolean;
+  maxAccounts?: number;
+  swapMode?: string;
+  onlyDirectRoutes?: boolean;
+  restrictIntermediateTokens?: boolean;
 };
 
 export type OverrideParams<SP extends SupportedProtocol> = SP extends "evm"
@@ -31,6 +36,10 @@ export type OverrideParams<SP extends SupportedProtocol> = SP extends "evm"
     }
   : {
       from: Address<SP>;
+      maxLamports?: number;
+      dynamicComputeUnitLimit?: boolean;
+      dynamicSlippage?: boolean;
+      computeUnitPriceMicroLamports?: number;
     };
 
 export type EstimatedData = {
