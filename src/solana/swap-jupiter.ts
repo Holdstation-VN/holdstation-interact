@@ -1,8 +1,11 @@
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { BigNumber } from "bignumber.js";
 import { OverrideParams, SwapParams, Swapper } from "../types";
-import type { QuoteResponse, SwapInfoResponse } from "./swap-jupiter.types";
 import { quoteResponseSchema, swapInfoResponseSchema } from "./validateResponse";
+import * as Yup from "yup";
+
+type SwapInfoResponse = Yup.InferType<typeof swapInfoResponseSchema>;
+type QuoteResponse = Yup.InferType<typeof quoteResponseSchema>;
 
 export class Jupiter implements Swapper<"solana"> {
   private swapUrl = "https://lite-api.jup.ag/swap/v1/swap";
@@ -129,7 +132,7 @@ export class Jupiter implements Swapper<"solana"> {
     }
 
     const data = await resp.json();
-    const validatedData: QuoteResponse = await quoteResponseSchema.validate(data, {
+    const validatedData = await quoteResponseSchema.validate(data, {
       abortEarly: false,
     });
 
@@ -177,7 +180,7 @@ export class Jupiter implements Swapper<"solana"> {
     }
 
     const data = await resp.json();
-    const validatedData: SwapInfoResponse = await swapInfoResponseSchema.validate(data, {
+    const validatedData = await swapInfoResponseSchema.validate(data, {
       abortEarly: false,
     });
     console.debug("getSwapInfo ", validatedData);
