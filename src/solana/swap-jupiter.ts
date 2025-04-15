@@ -36,8 +36,11 @@ export class Jupiter implements Swapper<"solana"> {
     const buffer = Buffer.from(swapInfo.swapTransaction, "base64");
     const versionedTx = VersionedTransaction.deserialize(Uint8Array.from(buffer));
     const feeResult = await this.connection.getFeeForMessage(versionedTx.message, "confirmed");
-    // Buffer gas to 1.2 for display
-    const totalEstimateFee = (feeResult?.value ? feeResult.value + estimateLamports : estimateLamports + 5000) * 1.2;
+
+    let totalEstimateFee = feeResult?.value ?? 5000;
+    if (estimateLamports > 0) {
+      totalEstimateFee += estimateLamports;
+    }
 
     console.debug("result ", {
       to: "",
