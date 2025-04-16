@@ -146,4 +146,122 @@ describe("[Solana SWAP] Jupiter", () => {
       );
     }).rejects.toThrow();
   });
+
+  it("slippage 0", async () => {
+    const result = await jup.estimate(
+      {
+        fromToken: "So11111111111111111111111111111111111111112",
+        toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        amount: "1000000",
+        slippage: "0",
+      },
+      {
+        from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz",
+      },
+    );
+    expect(result).toBeDefined();
+    expect(result.gas).toMatch(/^\d+$/);
+  });
+  it("add fee and fee account", async () => {
+    const result = await jup.estimate(
+      {
+        fromToken: "So11111111111111111111111111111111111111112",
+        toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        amount: "1000000",
+        slippage: "0",
+        fee: "20",
+      },
+      {
+        from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
+        feeAccount: "DNu5Z9zv7dh4tXNjyccyVxtV18ULbWx5YmSNot2JuCFw",
+      },
+    );
+    expect(result).toBeDefined();
+    expect(result.gas).toMatch(/^\d+$/);
+  });
+  it("add fee without fee account", async () => {
+    const result = await jup.estimate(
+      {
+        fromToken: "So11111111111111111111111111111111111111112",
+        toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        amount: "1000000",
+        slippage: "0",
+        fee: "20",
+      },
+      {
+        from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
+      },
+    );
+    expect(result).toBeDefined();
+    expect(result.gas).toMatch(/^\d+$/);
+  });
+  it("add fee account without fee", async () => {
+    const result = await jup.estimate(
+      {
+        fromToken: "So11111111111111111111111111111111111111112",
+        toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        amount: "1000000",
+        slippage: "0",
+      },
+      {
+        from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
+        feeAccount: "DNu5Z9zv7dh4tXNjyccyVxtV18ULbWx5YmSNot2JuCFw",
+      },
+    );
+    expect(result).toBeDefined();
+    expect(result.gas).toMatch(/^\d+$/);
+  });
+
+  it("add wrong fee account and fee", async () => {
+    await expect(async () => {
+      await jup.estimate(
+        {
+          fromToken: "So11111111111111111111111111111111111111112",
+          toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+          amount: "1000000",
+          slippage: "0",
+          fee: "20",
+        },
+        {
+          from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
+          feeAccount: "DNu5Z9zv7dh4tXNjyccyVxtV18ULbWx5Ym",
+        },
+      );
+    }).rejects.toThrow();
+  });
+
+  it("test API key for quote", async () => {
+    await expect(async () => {
+      await jup.estimate(
+        {
+          fromToken: "So11111111111111111111111111111111111111112",
+          toToken: "So11111111111111111111111111111111111111112",
+          amount: "1000000",
+          slippage: "10",
+        },
+        {
+          from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz",
+          apiKey: "",
+        },
+      );
+    }).rejects.toThrow();
+  });
+  it("test API key for swap", async () => {
+    await expect(async () => {
+      await jup.estimate(
+        {
+          fromToken: "So11111111111111111111111111111111111111112",
+          toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+          amount: "1000000",
+          slippage: "0",
+          fee: "20",
+        },
+        {
+          from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
+          feeAccount: "DNu5Z9zv7dh4tXNjyccyVxtV18ULbWx5Ym",
+          apiKey: "",
+        },
+      );
+    }).rejects.toThrow();
+  });
 });
