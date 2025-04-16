@@ -20,6 +20,7 @@ export type SwapParams<SP extends SupportedProtocol> = {
   toToken: Address<SP>;
   amount: string;
   slippage: string;
+  fee?: string;
   prefferRouters?: string[];
   asLegacyTransaction?: boolean;
   maxAccounts?: number;
@@ -36,6 +37,8 @@ export type OverrideParams<SP extends SupportedProtocol> = SP extends "evm"
     }
   : {
       from: Address<SP>;
+      apiKey?: string;
+      feeAccount?: string;
       maxLamports?: number;
       dynamicComputeUnitLimit?: boolean;
       dynamicSlippage?: boolean;
