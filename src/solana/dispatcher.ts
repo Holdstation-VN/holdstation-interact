@@ -84,7 +84,7 @@ export class Dispatcher implements Writer<"solana"> {
   }
 
   private async _estimateSwap(params: SwapParams<"solana">, override?: Partial<OverrideParams<"solana">>): Promise<EstimatedData> {
-    let preferredRouters = params.prefferRouters || Object.keys(this.swapper);
+    const preferredRouters = params.prefferRouters || Object.keys(this.swapper);
     if (preferredRouters.length === 0) {
       throw new Error("No router available");
     }
@@ -107,7 +107,7 @@ export class Dispatcher implements Writer<"solana"> {
 
       try {
         const result = await Promise.race<EstimatedData>([
-          swapper.estimate(params, { from: override.from }),
+          swapper.estimate(params, override),
           new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 30_000)),
         ]);
 

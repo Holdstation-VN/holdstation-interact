@@ -16,7 +16,7 @@ describe("Evm compatibility", () => {
         },
         {
           from: "0xf6F23DB1D2dBd51411D789FDBA09e2c842f7A3E1",
-        }
+        },
       );
 
       console.log(1555, result);
@@ -34,18 +34,19 @@ describe("Solana compatibility", () => {
   it("solana estimate", async () => {
     try {
       const dispatcher = await load("solana", "https://api.mainnet-beta.solana.com");
-      const result = await dispatcher.estimate.transfer(
+      const result = await dispatcher.estimate.swap(
         {
-          tokenAddress: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", // USDC
-          to: "7v8J5o3jRQ5sJUg8u7cL4bXHq7tF1Q3Fb6YpZg7Qd7Q6", // Random address
-          amount: "100000",
-        }
-        // {
-        //   from: {
-        //     publicKey: "7v8J5o3jRQ5sJUg8u7cL4bXHq7tF1Q3Fb6YpZg7Qd7Q6",
-        //     secretKey: "7v8J5o3jRQ5sJUg8u7cL4bXHq7tF1Q3Fb6YpZg7Qd7Q6",
-        //   },
-        // }
+          fromToken: "So11111111111111111111111111111111111111112",
+          toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+          amount: "1000000",
+          slippage: "0",
+          fee: "20",
+        },
+        {
+          from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
+          feeAccount: "DNu5Z9zv7dh4tXNjyccyVxtV18ULbWx5YmSNot2JuCFw",
+          maxLamports: 50_000_000,
+        },
       );
 
       console.log(1555, result);

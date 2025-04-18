@@ -187,7 +187,7 @@ export class Jupiter implements Swapper<"solana"> {
     if (override?.computeUnitPriceMicroLamports) {
       bodyObject.computeUnitPriceMicroLamports = override.computeUnitPriceMicroLamports;
     }
-
+    console.log("bodyObject ", bodyObject);
     // part 1 fetch data without api key
     let resp = await fetch(`${this.swapUrl}/swap/v1/swap`, {
       method: "POST",
