@@ -1,5 +1,5 @@
 {
-  "name": "@lamlv/interact",
+  "name": "@holdstation/interact",
   "version": "1.0.12",
   "main": "dist/interact.cjs.js",
   "module": "dist/interact.es.js",
