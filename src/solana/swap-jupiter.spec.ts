@@ -202,10 +202,12 @@ describe("[Solana SWAP] Jupiter", () => {
         toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         amount: "1000000",
         slippage: "0",
+        fee: "20",
       },
       {
         from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
         feeAccount: "DNu5Z9zv7dh4tXNjyccyVxtV18ULbWx5YmSNot2JuCFw",
+        maxLamports: 50_000_000,
       },
     );
     expect(result).toBeDefined();
@@ -259,7 +261,6 @@ describe("[Solana SWAP] Jupiter", () => {
         {
           from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
           feeAccount: "DNu5Z9zv7dh4tXNjyccyVxtV18ULbWx5Ym",
-          apiKey: "",
         },
       );
     }).rejects.toThrow();
