@@ -16,7 +16,7 @@ describe("[Solana SWAP] Okx", () => {
       },
       {
         from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
-        feeAccount: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
+        fromTokenReferrerWalletAddress: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
         okxApiConfig: {
           api_key: "d1807fde-aa09-4c65-972d-e2fb19a8d3d5",
           secret_key: "3F558CC8EF8EDE372B67E34354B0C34A",
@@ -41,7 +41,7 @@ describe("[Solana SWAP] Okx", () => {
       },
       {
         from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
-        feeAccount: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
+        fromTokenReferrerWalletAddress: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
         okxApiConfig: {
           api_key: "",
           secret_key: "",
@@ -68,7 +68,7 @@ describe("[Solana SWAP] Okx", () => {
         },
         {
           from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
-          feeAccount: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
+          fromTokenReferrerWalletAddress: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
           okxApiConfig: {
             api_key: "",
             secret_key: "",
@@ -91,7 +91,7 @@ describe("[Solana SWAP] Okx", () => {
       },
       {
         from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
-        feeAccount: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
+        fromTokenReferrerWalletAddress: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
         okxApiConfig: {
           api_key: "",
           secret_key: "",
