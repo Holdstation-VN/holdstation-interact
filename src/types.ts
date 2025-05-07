@@ -1,6 +1,7 @@
 import { Address as SolanaAddress } from "@project-serum/anchor";
 import { Signer } from "@solana/web3.js";
 import { ethers } from "ethers";
+import { OxkApiConfig } from "./solana/okx/swap-okx.type";
 
 export type SupportedProtocol = "evm" | "solana";
 
@@ -19,15 +20,39 @@ export type SwapParams<SP extends SupportedProtocol> = {
   fromToken: Address<SP>;
   toToken: Address<SP>;
   amount: string;
+
+  // this field slippage is percent 0-100 %
   slippage: string;
+  // this field slippage is percent 0-10% (okx is 0-3%)
   fee?: string;
   prefferRouters?: string[];
+};
+
+export interface JupiterOverrideParams {
+  apiKey?: string;
+  feeAccount?: string;
+  maxLamports?: number;
+  dynamicComputeUnitLimit?: boolean;
+  dynamicSlippage?: boolean;
+  computeUnitPriceMicroLamports?: number;
   asLegacyTransaction?: boolean;
   maxAccounts?: number;
   swapMode?: string;
   onlyDirectRoutes?: boolean;
   restrictIntermediateTokens?: boolean;
-};
+}
+
+export interface OkxSolanaOverrideParams {
+  okxApiConfig?: OxkApiConfig;
+  fromTokenReferrerWalletAddress?: string;
+  toTokenReferrerWalletAddress?: string;
+  computeUnitPrice?: string;
+  computeUnitLimit?: string;
+  directRoute?: boolean;
+  priceImpactProtectionPercentage?: string;
+  autoSlippage?: string;
+  maxAutoSlippage?: string;
+}
 
 export type OverrideParams<SP extends SupportedProtocol> = SP extends "evm"
   ? {
@@ -37,13 +62,8 @@ export type OverrideParams<SP extends SupportedProtocol> = SP extends "evm"
     }
   : {
       from: Address<SP>;
-      apiKey?: string;
-      feeAccount?: string;
-      maxLamports?: number;
-      dynamicComputeUnitLimit?: boolean;
-      dynamicSlippage?: boolean;
-      computeUnitPriceMicroLamports?: number;
-    };
+    } & JupiterOverrideParams &
+      OkxSolanaOverrideParams;
 
 export type EstimatedData = {
   // router name: hold.so, kyberswap, etc...

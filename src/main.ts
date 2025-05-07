@@ -4,8 +4,9 @@ import { Dispatcher as EvmDispatcher } from "./evm/dispatcher";
 import { HoldSo } from "./evm/swap-hold.so";
 import { KyberSwap } from "./evm/swap-kyber";
 import { Okx } from "./evm/swap-okx";
+import { Okx as OkxSolana } from "./solana/okx/swap-okx";
 import { Dispatcher as SolanaDispatcher } from "./solana/dispatcher";
-import { Jupiter } from "./solana/swap-jupiter";
+import { Jupiter } from "./solana/jupiter/swap-jupiter";
 import { SupportedProtocol, Writer } from "./types";
 
 const cachedJsonRpcProvider = new Map<string, ethers.providers.JsonRpcProvider>();
@@ -51,6 +52,7 @@ async function solana(rpc: string): Promise<Writer<"solana">> {
   const connection = cachedSolanaProvider.get(rpc)!;
 
   const dispatcher = new SolanaDispatcher(connection);
+  dispatcher.load(new OkxSolana(connection));
   dispatcher.load(new Jupiter(connection));
 
   return dispatcher;

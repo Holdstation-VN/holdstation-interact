@@ -1,9 +1,9 @@
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { BigNumber } from "bignumber.js";
-import { OverrideParams, SwapParams, Swapper } from "../types";
+import { OverrideParams, SwapParams, Swapper } from "../../types";
 import { quoteResponseSchema, swapInfoResponseSchema } from "./validateResponse";
 import * as Yup from "yup";
-import { config } from "../config";
+import { config } from "../../config";
 import { BodyObject } from "./swap-jupiter.type";
 
 type SwapInfoResponse = Yup.InferType<typeof swapInfoResponseSchema>;
@@ -28,7 +28,11 @@ export class Jupiter implements Swapper<"solana"> {
   }
 
   async estimate(params: SwapParams<"solana">, override?: Partial<OverrideParams<"solana">>) {
-    const quote = await this.getQuote(params, override?.apiKey);
+    if (!override?.from) {
+      throw new Error("Unknown user public key");
+    }
+
+    const quote = await this.getQuote(params, override);
     const swapInfo = await this.getSwapInfo(quote, override);
 
     if (swapInfo?.simulationError) {
@@ -46,7 +50,7 @@ export class Jupiter implements Swapper<"solana"> {
     }
 
     console.debug("result ", {
-      to: "",
+      to: this.name(),
       gas: totalEstimateFee.toString(),
       data: swapInfo.swapTransaction,
     });
@@ -86,41 +90,41 @@ export class Jupiter implements Swapper<"solana"> {
     return "jupiter";
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   enabled(chainId: number): boolean {
     // alway on for solana
     return true;
   }
 
-  createQuoteSearchParams(url: URL, params: SwapParams<"solana">) {
+  createQuoteSearchParams(url: URL, params: SwapParams<"solana">, override: Partial<OverrideParams<"solana">>) {
     url.searchParams.append("inputMint", params.fromToken.toString());
     url.searchParams.append("outputMint", params.toToken.toString());
     url.searchParams.append("amount", params.amount.toString());
-    url.searchParams.append("slippageBps", params.slippage.toString());
+
+    // https://dev.jup.ag/docs/swap-api/add-fees-to-swap#2-set-your-fee-in-quote
+    url.searchParams.append("platformFeeBps", (Number(params?.fee ?? 0.02) * 100).toString());
+
+    // The number of basis points you can tolerate to lose during time of execution. e.g. 1% = 100bps
+    url.searchParams.append("slippageBps", (Number(params.slippage) * 100).toString());
 
     // https://dev.jup.ag/docs/api/swap-api/quote
-    url.searchParams.append("restrictIntermediateTokens", params?.restrictIntermediateTokens?.toString() ?? "true");
-    url.searchParams.append("onlyDirectRoutes", params?.onlyDirectRoutes?.toString() ?? "false");
-    url.searchParams.append("asLegacyTransaction", params?.asLegacyTransaction?.toString() ?? "false");
+    url.searchParams.append("restrictIntermediateTokens", override?.restrictIntermediateTokens?.toString() ?? "true");
+    url.searchParams.append("onlyDirectRoutes", override?.onlyDirectRoutes?.toString() ?? "false");
+    url.searchParams.append("asLegacyTransaction", override?.asLegacyTransaction?.toString() ?? "false");
+    if (override?.swapMode) {
+      url.searchParams.append("swapMode", override?.swapMode.toString());
+    }
+    if (override?.maxAccounts) {
+      url.searchParams.append("maxAccounts", override?.maxAccounts.toString());
+    }
 
-    if (params?.prefferRouters) {
-      url.searchParams.append("dexes", params?.prefferRouters.toString());
-    }
-    if (params?.swapMode) {
-      url.searchParams.append("swapMode", params?.swapMode.toString());
-    }
-    if (params?.maxAccounts) {
-      url.searchParams.append("maxAccounts", params?.maxAccounts.toString());
-    }
-    if (params?.fee) {
-      url.searchParams.append("platformFeeBps", params?.fee.toString());
-    }
     return url;
   }
 
   // https://dev.jup.ag/docs/api/swap-api/quote
-  private async getQuote(params: SwapParams<"solana">, apiKey: string | undefined) {
+  private async getQuote(params: SwapParams<"solana">, override: Partial<OverrideParams<"solana">>) {
     const url = new URL(`${this.swapUrl}/swap/v1/quote`);
-    this.createQuoteSearchParams(url, params);
+    this.createQuoteSearchParams(url, params, override);
     console.debug(`Jupiter quote: ${url.toString()}`);
     // part 1 fetch data without api key
     let resp = await fetch(url.toString(), {
@@ -130,15 +134,15 @@ export class Jupiter implements Swapper<"solana"> {
     });
 
     // 2) Nếu fail và có apiKey, thử fetch lần hai với apiKey
-    if (!resp.ok && apiKey) {
+    if (!resp.ok && override.apiKey) {
       const swapUrlPro = new URL(`${this.swapUrlPro}/v6/quote`);
-      this.createQuoteSearchParams(swapUrlPro, params);
+      this.createQuoteSearchParams(swapUrlPro, params, override);
       console.debug(`Jupiter quote: ${swapUrlPro.toString()}`);
 
       resp = await fetch(swapUrlPro.toString(), {
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": apiKey ?? config.SOLANA_JUPITER_API_KEY,
+          "x-api-key": override.apiKey ?? config.SOLANA_JUPITER_API_KEY,
         },
       });
     }

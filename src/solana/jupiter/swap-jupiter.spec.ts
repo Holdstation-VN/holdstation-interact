@@ -11,7 +11,7 @@ describe("[Solana SWAP] Jupiter", () => {
         fromToken: "So11111111111111111111111111111111111111112", // WSOL
         toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
         amount: "1000000",
-        slippage: "10",
+        slippage: "0.5",
       },
       { from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz" }, // Random wallet
     );
@@ -27,7 +27,7 @@ describe("[Solana SWAP] Jupiter", () => {
         fromToken: "So11111111111111111111111111111111111111112", // WSOL
         toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", // USDT
         amount: "1000000",
-        slippage: "10",
+        slippage: "1",
       },
       { from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN" }, // Random wallet
     );
@@ -43,7 +43,7 @@ describe("[Solana SWAP] Jupiter", () => {
         fromToken: "So11111111111111111111111111111111111111112",
         toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
         amount: "1000000",
-        slippage: "10",
+        slippage: "1",
       },
       {
         from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz",
@@ -62,7 +62,7 @@ describe("[Solana SWAP] Jupiter", () => {
         fromToken: "So11111111111111111111111111111111111111112",
         toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
         amount: "1000000",
-        slippage: "10",
+        slippage: "1",
       },
       {
         from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz",
@@ -82,7 +82,7 @@ describe("[Solana SWAP] Jupiter", () => {
         fromToken: "So11111111111111111111111111111111111111112",
         toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
         amount: "1000000",
-        slippage: "10",
+        slippage: "1",
       },
       {
         from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz",
@@ -101,7 +101,7 @@ describe("[Solana SWAP] Jupiter", () => {
         fromToken: "So11111111111111111111111111111111111111112",
         toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
         amount: "1000000",
-        slippage: "10",
+        slippage: "1",
       },
       {
         from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz",
@@ -119,10 +119,10 @@ describe("[Solana SWAP] Jupiter", () => {
           fromToken: "So11111111111111111111111111111111111111112",
           toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
           amount: "1000000",
-          slippage: "50",
-          swapMode: "ExactIn",
+          slippage: "5",
         },
         {
+          swapMode: "ExactIn",
           from: "jdocuPgEAjMfihABsPgKEvYtsmMzjUHeq9LX4Hvs7f3",
           computeUnitPriceMicroLamports: 1000,
           dynamicComputeUnitLimit: true,
@@ -140,7 +140,7 @@ describe("[Solana SWAP] Jupiter", () => {
           fromToken: "So11111111111111111111111111111111111111112",
           toToken: "So11111111111111111111111111111111111111112",
           amount: "1000000",
-          slippage: "10",
+          slippage: "1",
         },
         { from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz" },
       );
@@ -169,7 +169,7 @@ describe("[Solana SWAP] Jupiter", () => {
         toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         amount: "1000000",
         slippage: "0",
-        fee: "20",
+        fee: "0.2",
       },
       {
         from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
@@ -186,7 +186,7 @@ describe("[Solana SWAP] Jupiter", () => {
         toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         amount: "1000000",
         slippage: "0",
-        fee: "20",
+        fee: "0.2",
       },
       {
         from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
@@ -202,7 +202,7 @@ describe("[Solana SWAP] Jupiter", () => {
         toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         amount: "1000000",
         slippage: "0",
-        fee: "20",
+        fee: "0.2",
       },
       {
         from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
@@ -222,7 +222,7 @@ describe("[Solana SWAP] Jupiter", () => {
           toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
           amount: "1000000",
           slippage: "0",
-          fee: "20",
+          fee: "0.2",
         },
         {
           from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
@@ -239,7 +239,7 @@ describe("[Solana SWAP] Jupiter", () => {
           fromToken: "So11111111111111111111111111111111111111112",
           toToken: "So11111111111111111111111111111111111111112",
           amount: "1000000",
-          slippage: "10",
+          slippage: "1",
         },
         {
           from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz",
@@ -256,7 +256,7 @@ describe("[Solana SWAP] Jupiter", () => {
           toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
           amount: "1000000",
           slippage: "0",
-          fee: "20",
+          fee: "0.2",
         },
         {
           from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
