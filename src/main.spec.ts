@@ -36,16 +36,21 @@ describe("Solana compatibility", () => {
       const dispatcher = await load("solana", "https://api.mainnet-beta.solana.com");
       const result = await dispatcher.estimate.swap(
         {
-          fromToken: "So11111111111111111111111111111111111111112",
-          toToken: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+          fromToken: "So11111111111111111111111111111111111111112", // WSOL
+          toToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
           amount: "1000000",
-          slippage: "0",
-          fee: "20",
+          slippage: "0.2",
+          fee: "0.2",
         },
         {
-          from: "HP5BkWju1EKTG7QMcEsqgF1ExNRYkzRkd4RsE5FeuZNN",
-          feeAccount: "DNu5Z9zv7dh4tXNjyccyVxtV18ULbWx5YmSNot2JuCFw",
-          maxLamports: 50_000_000,
+          from: "AiksyBEPFdSqE14QszuGZu858KaxXcUX4VMDisJ3cGTz",
+          fromTokenReferrerWalletAddress: "4NRKjuM1KNCbVcLhnzkH1xSoTYbG5mC1nADg71kU2nNp",
+          okxApiConfig: {
+            api_key: "",
+            secret_key: "",
+            passphrase: "",
+            project: "",
+          },
         },
       );
 
