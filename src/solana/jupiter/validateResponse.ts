@@ -41,7 +41,6 @@ export const quoteResponseSchema = Yup.object({
   inAmount: Yup.string().required(),
   outputMint: Yup.string().required(),
   outAmount: Yup.string().required(),
-  otherAmountThreshold: Yup.string().required(),
   swapMode: Yup.string().required(),
   slippageBps: Yup.number().required().nullable(),
 
@@ -50,12 +49,7 @@ export const quoteResponseSchema = Yup.object({
   priceImpactPct: Yup.string().required().nullable(),
   routePlan: Yup.array(routePlanSchema).required(),
 
-  scoreReport: Yup.mixed().required().nullable(),
-
-  contextSlot: Yup.number().required().nullable(),
-  timeTaken: Yup.number().required().nullable(),
   swapUsdValue: Yup.string().required(),
-  simplerRouteUsed: Yup.boolean().required().nullable(),
   mostReliableAmmsQuoteReport: mostReliableAmmsQuoteReportSchema.nullable(),
 });
 
