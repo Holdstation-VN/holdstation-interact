@@ -8,7 +8,7 @@ export type OxkApiConfig = {
 // https://web3.okx.com/build/dev-docs/dex-api/dex-swap#request-parameters
 export type OkxSolanaParams = {
   amount: string;
-  slippage: string;
+  slippagePercent: string;
   feePercent: string;
   chainIndex: string;
   fromTokenAddress: string;

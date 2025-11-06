@@ -7,7 +7,8 @@ import { OkxSolanaParams, OxkApiConfig } from "./swap-okx.type";
 import { swapResponseSchema } from "./validateResponse";
 
 export class Okx implements Swapper<"solana"> {
-  private swapUrl = "https://web3.okx.com";
+  private readonly swapUrl = "https://web3.okx.com";
+  private readonly swapRequestPath = "/api/v6/dex/aggregator/swap";
 
   constructor(private connection: Connection) {}
 
@@ -25,35 +26,26 @@ export class Okx implements Swapper<"solana"> {
     const swapData = swapInfo.data[0];
     console.debug("swapInfo ", swapData);
 
-    const amountOutUsd =
-      new BigNumber(swapData?.routerResult.toTokenAmount).dividedBy(Math.pow(10, Number(swapData?.routerResult?.toToken.decimal) || 9)).toNumber() *
-      (Number(swapData?.routerResult?.toToken?.tokenUnitPrice) || 0);
+    const toTokenAmount = this.toStringValue(swapData?.routerResult.toTokenAmount || "0");
+    const toTokenDecimal = Number(this.toStringValue(swapData?.routerResult?.toToken.decimal || "0"));
+    const toTokenPrice = Number(this.toStringValue(swapData?.routerResult?.toToken?.tokenUnitPrice || "0"));
+    const amountOutUsd = new BigNumber(toTokenAmount).dividedBy(Math.pow(10, toTokenDecimal || 9)).toNumber() * toTokenPrice;
 
     return {
       to: this.name(),
-      gas: swapData.routerResult.estimateGasFee,
+      gas: this.toStringValue(swapData.routerResult.estimateGasFee),
       data: swapInfo.data[0].tx.data,
 
       addons: {
-        amountOut: swapData.routerResult.toTokenAmount,
+        amountOut: this.toStringValue(swapData.routerResult.toTokenAmount),
         amountOutUsd: amountOutUsd.toString(),
-        minAmountOut: swapData.tx.minReceiveAmount,
+        minAmountOut: this.toStringValue(swapData.tx.minReceiveAmount),
         simulationError: swapInfo?.msg,
         // protocols is a list of pathways that funds take when swapping between two tokens.
         protocols: [
           {
-            // amount: refers to the amount of funds received when using this pathway.
             amount: "",
-            // swaps: provides details about the transaction routes, specifying through which tokens the funds are exchanged and by which protocols the swaps are executed.
-            swaps: swapData.routerResult.dexRouterList[0].subRouterList.map((item) => {
-              return {
-                amount: "",
-                from: item.fromToken.tokenContractAddress,
-                pool: item.dexProtocol[0].dexName,
-                protocol: item.dexProtocol[0].dexName,
-                to: item.toToken.tokenContractAddress,
-              };
-            }),
+            swaps: this.buildProtocolSwaps(swapData.routerResult.dexRouterList),
           },
         ],
       },
@@ -68,6 +60,58 @@ export class Okx implements Swapper<"solana"> {
   enabled(chainId: number): boolean {
     // alway on for solana
     return true;
+  }
+
+  private buildProtocolSwaps(dexRouterList: unknown) {
+    if (!Array.isArray(dexRouterList)) {
+      return [];
+    }
+
+    const routerEntries = dexRouterList as Array<Record<string, unknown>>;
+    const firstItem = routerEntries[0] as Record<string, unknown> | undefined;
+    const subRouters = firstItem?.subRouterList as Array<Record<string, unknown>> | undefined;
+
+    if (Array.isArray(subRouters) && subRouters.length > 0) {
+      return subRouters.map((item) => {
+        const leg = item as Record<string, unknown>;
+        const dexProtocolRaw = Array.isArray(leg.dexProtocol) ? leg.dexProtocol[0] : leg.dexProtocol;
+        const dexProtocol = dexProtocolRaw as Record<string, unknown> | undefined;
+        const fromToken = leg.fromToken as { tokenContractAddress?: string };
+        const toToken = leg.toToken as { tokenContractAddress?: string };
+        const poolName = typeof dexProtocol?.dexName === "string" ? (dexProtocol.dexName as string) : "";
+        return {
+          amount: "",
+          from: fromToken?.tokenContractAddress ?? "",
+          pool: poolName,
+          protocol: poolName,
+          to: toToken?.tokenContractAddress ?? "",
+        };
+      });
+    }
+
+    return routerEntries.map((entry) => {
+      const leg = entry as Record<string, unknown>;
+      const dexProtocolRaw = Array.isArray(leg.dexProtocol) ? leg.dexProtocol[0] : leg.dexProtocol;
+      const dexProtocol = dexProtocolRaw as Record<string, unknown> | undefined;
+      const fromToken = leg.fromToken as { tokenContractAddress?: string };
+      const toToken = leg.toToken as { tokenContractAddress?: string };
+      const poolName = typeof dexProtocol?.dexName === "string" ? (dexProtocol.dexName as string) : "";
+      return {
+        amount: "",
+        from: fromToken?.tokenContractAddress ?? "",
+        pool: poolName,
+        protocol: poolName,
+        to: toToken?.tokenContractAddress ?? "",
+      };
+    });
+  }
+
+  private toStringValue(value: unknown): string {
+    if (value === undefined || value === null) {
+      return "";
+    }
+
+    return String(value);
   }
 
   getHeaders(timestamp: string, method: string, requestPath: string, queryString = "", okxApiConfig: OxkApiConfig, body = "") {
@@ -95,7 +139,7 @@ export class Okx implements Swapper<"solana"> {
       fromTokenAddress: params.fromToken.toString(),
       toTokenAddress: params.toToken.toString(),
       userWalletAddress: override.from?.toString() ?? "",
-      slippage: params.slippage,
+      slippagePercent: params.slippage,
       feePercent: params?.fee?.toString() ?? "0.2",
     };
 
@@ -133,7 +177,7 @@ export class Okx implements Swapper<"solana"> {
 
     const apiConfig = override.okxApiConfig;
     const timestamp = new Date().toISOString();
-    const requestPath = "/api/v5/dex/aggregator/swap";
+    const requestPath = this.swapRequestPath;
     const queryString = "?" + new URLSearchParams(paramsSwap).toString();
     const headers = this.getHeaders(timestamp, "GET", requestPath, queryString, apiConfig);
 
@@ -155,7 +199,7 @@ export class Okx implements Swapper<"solana"> {
       abortEarly: false,
     });
 
-    if (validatedData?.code !== "0") {
+    if (String(validatedData?.code) !== "0") {
       console.debug("validatedData ", validatedData?.msg);
       throw new Error(validatedData?.msg ?? "Error when get swap data");
     }
