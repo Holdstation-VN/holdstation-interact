@@ -27,8 +27,8 @@ export class Okx implements Swapper<"solana"> {
     console.debug("swapInfo ", swapData);
 
     const toTokenAmount = this.toStringValue(swapData?.routerResult.toTokenAmount || "0");
-    const toTokenDecimal = Number(this.toStringValue(swapData?.routerResult?.toToken.decimal || "0")) || 0;
-    const toTokenPrice = Number(this.toStringValue(swapData?.routerResult?.toToken?.tokenUnitPrice || "0")) || 0;
+    const toTokenDecimal = Number(this.toStringValue(swapData?.routerResult?.toToken.decimal || "0"));
+    const toTokenPrice = Number(this.toStringValue(swapData?.routerResult?.toToken?.tokenUnitPrice || "0"));
     const amountOutUsd = new BigNumber(toTokenAmount).dividedBy(Math.pow(10, toTokenDecimal || 9)).toNumber() * toTokenPrice;
 
     return {
