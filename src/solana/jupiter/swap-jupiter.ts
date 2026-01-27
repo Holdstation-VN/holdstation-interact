@@ -5,6 +5,7 @@ import { quoteResponseSchema, swapInfoResponseSchema } from "./validateResponse"
 import * as Yup from "yup";
 import { config } from "../../config";
 import { BodyObject } from "./swap-jupiter.type";
+import { createLogger, type Logger } from "../../utils/logger";
 
 type SwapInfoResponse = Yup.InferType<typeof swapInfoResponseSchema>;
 export type QuoteResponse = Yup.InferType<typeof quoteResponseSchema>;
@@ -12,8 +13,14 @@ export type QuoteResponse = Yup.InferType<typeof quoteResponseSchema>;
 export class Jupiter implements Swapper<"solana"> {
   private swapUrl = "https://lite-api.jup.ag";
   private swapUrlPro = "https://quote-api.jup.ag";
+  private readonly logger: Logger;
 
-  constructor(private connection: Connection) {}
+  constructor(
+    private connection: Connection,
+    options?: Partial<{ debug: boolean }>,
+  ) {
+    this.logger = createLogger({ prefix: "JUPITER", isDebug: Boolean(options?.debug) });
+  }
 
   estimateComputeLamports(swapInfo: SwapInfoResponse): number {
     const { computeUnitLimit, prioritizationType } = swapInfo;
@@ -32,7 +39,10 @@ export class Jupiter implements Swapper<"solana"> {
       throw new Error("Unknown user public key");
     }
 
+    this.logger.debug("getQuote input", { params, override });
     const quote = await this.getQuote(params, override);
+
+    this.logger.debug("getSwapInfo input", { quote, override });
     const swapInfo = await this.getSwapInfo(quote, override);
 
     if (swapInfo?.simulationError) {
@@ -49,13 +59,7 @@ export class Jupiter implements Swapper<"solana"> {
       totalEstimateFee += estimateLamports;
     }
 
-    console.debug("result ", {
-      to: this.name(),
-      gas: totalEstimateFee.toString(),
-      data: swapInfo.swapTransaction,
-    });
-
-    return {
+    const result = {
       to: "",
       gas: totalEstimateFee.toString(),
       data: swapInfo.swapTransaction,
@@ -84,6 +88,10 @@ export class Jupiter implements Swapper<"solana"> {
         ],
       },
     };
+
+    this.logger.debug("result", result);
+
+    return result;
   }
 
   name(): string {
@@ -102,6 +110,7 @@ export class Jupiter implements Swapper<"solana"> {
     url.searchParams.append("amount", params.amount.toString());
 
     // https://dev.jup.ag/docs/swap-api/add-fees-to-swap#2-set-your-fee-in-quote
+    // TODO: không sử dụng Number casting, dùng bignumber.js
     url.searchParams.append("platformFeeBps", (Number(params?.fee ?? 0.02) * 100).toString());
 
     // The number of basis points you can tolerate to lose during time of execution. e.g. 1% = 100bps
@@ -111,11 +120,13 @@ export class Jupiter implements Swapper<"solana"> {
     url.searchParams.append("restrictIntermediateTokens", override?.restrictIntermediateTokens?.toString() ?? "true");
     url.searchParams.append("onlyDirectRoutes", override?.onlyDirectRoutes?.toString() ?? "false");
     url.searchParams.append("asLegacyTransaction", override?.asLegacyTransaction?.toString() ?? "false");
+
     if (override?.swapMode) {
-      url.searchParams.append("swapMode", override?.swapMode.toString());
+      url.searchParams.append("swapMode", override.swapMode.toString());
     }
+
     if (override?.maxAccounts) {
-      url.searchParams.append("maxAccounts", override?.maxAccounts.toString());
+      url.searchParams.append("maxAccounts", override.maxAccounts.toString());
     }
 
     return url;
@@ -125,7 +136,7 @@ export class Jupiter implements Swapper<"solana"> {
   private async getQuote(params: SwapParams<"solana">, override: Partial<OverrideParams<"solana">>) {
     const url = new URL(`${this.swapUrl}/swap/v1/quote`);
     this.createQuoteSearchParams(url, params, override);
-    console.debug(`Jupiter quote: ${url.toString()}`);
+    this.logger.debug("Jupiter quote", { url: url.toString() });
     // part 1 fetch data without api key
     let resp = await fetch(url.toString(), {
       headers: {
@@ -137,7 +148,7 @@ export class Jupiter implements Swapper<"solana"> {
     if (!resp.ok && override.apiKey) {
       const swapUrlPro = new URL(`${this.swapUrlPro}/v6/quote`);
       this.createQuoteSearchParams(swapUrlPro, params, override);
-      console.debug(`Jupiter quote: ${swapUrlPro.toString()}`);
+      this.logger.debug("Jupiter quote", { url: swapUrlPro.toString() });
 
       resp = await fetch(swapUrlPro.toString(), {
         headers: {
@@ -149,9 +160,9 @@ export class Jupiter implements Swapper<"solana"> {
 
     // handle error fetch data
     if (!resp.ok) {
-      const errorData = await resp.json();
-      console.debug("errorData getQuote", errorData);
-      const errorMessage = errorData.error || JSON.stringify(errorData);
+      const errorData = await resp.json().catch(() => undefined);
+      this.logger.debug("errorData getSwapInfo", errorData);
+      const errorMessage = errorData?.error ?? "Something wrong";
       throw new Error(errorMessage);
     }
 
@@ -191,7 +202,7 @@ export class Jupiter implements Swapper<"solana"> {
     if (override?.computeUnitPriceMicroLamports) {
       bodyObject.computeUnitPriceMicroLamports = override.computeUnitPriceMicroLamports;
     }
-    console.log("bodyObject ", bodyObject);
+    this.logger.debug("bodyObject", bodyObject);
     // part 1 fetch data without api key
     let resp = await fetch(`${this.swapUrl}/swap/v1/swap`, {
       method: "POST",
@@ -217,7 +228,7 @@ export class Jupiter implements Swapper<"solana"> {
     // handle error fetch data
     if (!resp.ok) {
       const errorData = await resp.json();
-      console.debug("errorData getQuote", errorData);
+      this.logger.debug("errorData getQuote", errorData);
       const errorMessage = errorData.error || JSON.stringify(errorData);
       throw new Error(errorMessage);
     }
@@ -226,7 +237,7 @@ export class Jupiter implements Swapper<"solana"> {
     const validatedData = await swapInfoResponseSchema.validate(data, {
       abortEarly: false,
     });
-    console.debug("getSwapInfo ", validatedData);
+    this.logger.debug("getSwapInfo", validatedData);
     return validatedData;
   }
 }

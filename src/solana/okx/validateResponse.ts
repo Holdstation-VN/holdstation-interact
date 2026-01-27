@@ -118,3 +118,6 @@ export const swapResponseSchema = Yup.object({
   data: Yup.array(swapItemSchema).required(),
   msg: Yup.string().nullable(),
 }).required();
+
+export type SwapResponse = Yup.InferType<typeof swapResponseSchema>;
+export type SwapResponseItem = Yup.InferType<typeof swapItemSchema>;
