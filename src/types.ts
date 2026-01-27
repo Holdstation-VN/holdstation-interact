@@ -44,6 +44,7 @@ export interface JupiterOverrideParams {
 
 export interface OkxSolanaOverrideParams {
   okxApiConfig?: OxkApiConfig;
+  isDebug?: boolean;
   fromTokenReferrerWalletAddress?: string;
   toTokenReferrerWalletAddress?: string;
   computeUnitPrice?: string;
@@ -59,6 +60,7 @@ export type OverrideParams<SP extends SupportedProtocol> = SP extends "evm"
       from: Address<SP>;
       gasLimit: string;
       gasPrice: string;
+      isDebug?: boolean;
     }
   : {
       from: Address<SP>;
