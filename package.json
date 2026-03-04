@@ -1,5 +1,5 @@
 {
-  "name": "@holdstation/interact",
+  "name": "@holdstation-vn/interact",
   "version": "1.0.18",
   "packageManager": "yarn@1.22.22",
   "main": "dist/interact.cjs.js",
@@ -14,7 +14,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build": "rimraf dist && vite build"
+    "build": "rimraf dist && vite build",
+    "patch": "npm version patch"
   },
   "author": "",
   "license": "ISC",
@@ -63,7 +64,8 @@
     "**/*": "prettier --write --ignore-unknown"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
     "bs58": "^4.0.1",
