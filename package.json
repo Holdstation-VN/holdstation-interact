@@ -1,6 +1,6 @@
 {
   "name": "@holdstation-vn/interact",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "packageManager": "yarn@1.22.22",
   "main": "dist/interact.cjs.js",
   "module": "dist/interact.es.js",
