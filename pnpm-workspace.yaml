@@ -1,0 +1,11 @@
+# Only resolve package versions that have been on npm for at least 7 days.
+# Gives time for a compromised release to be caught and pulled first.
+minimumReleaseAge: 10080
+
+# Dependency install scripts are blocked unless listed here as true.
+# These all have JS fallbacks; the SDK build does not need them.
+allowBuilds:
+  bigint-buffer: false
+  bufferutil: false
+  esbuild: false
+  utf-8-validate: false
